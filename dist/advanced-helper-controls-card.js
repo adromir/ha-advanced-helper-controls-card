@@ -1296,3 +1296,4 @@ console.info(
   "color: white; background: #0284c7; font-weight: 700; border-radius: 3px 0 0 3px;",
   "color: #0284c7; background: #e0f2fe; font-weight: 700; border-radius: 0 3px 3px 0;"
 );
+
