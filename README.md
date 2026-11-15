@@ -13,6 +13,17 @@ Features a full visual **GUI Card Editor**, dynamic color gradients (green ➔ y
 
 ---
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/adromir/ha-advanced-helper-controls-card/main/Screenshots/advanced-helper-controls-card.png" alt="Advanced Helper Controls Card Preview" width="600">
+</p>
+<p align="center">
+  <em>Unified tactile helper controls: rotary knobs with dynamic color gradients, wedge faders, quick stepper presets, segmented mode pills, and physical rocker switches.</em>
+</p>
+
+---
+
 ## ✨ Available Control Types
 
 | Control Type | Description | Best Suited For |
