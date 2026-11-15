@@ -4,7 +4,7 @@
  * License: MIT
  */
 
-const CARD_VERSION = "1.0.0";
+const CARD_VERSION = "1.0.1";
 
 const GRADIENT_PRESETS = {
   "green-yellow-red": ["#10b981", "#eab308", "#ef4444"],
@@ -1043,6 +1043,12 @@ class AdvancedHelperControlsCardEditor extends HTMLElement {
     this._hass = null;
   }
 
+  connectedCallback() {
+    if (!customElements.get("ha-entity-picker") && window.loadCardHelpers) {
+      window.loadCardHelpers();
+    }
+  }
+
   setConfig(config) {
     this._config = config;
     this._render();
@@ -1050,6 +1056,11 @@ class AdvancedHelperControlsCardEditor extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this.shadowRoot) {
+      this.shadowRoot.querySelectorAll("ha-entity-picker").forEach(picker => {
+        picker.hass = hass;
+      });
+    }
   }
 
   _render() {
@@ -1068,6 +1079,10 @@ class AdvancedHelperControlsCardEditor extends HTMLElement {
           display: flex;
           flex-direction: column;
           gap: 4px;
+        }
+        ha-entity-picker {
+          display: block;
+          width: 100%;
         }
         label {
           font-size: 0.85rem;
@@ -1163,8 +1178,13 @@ class AdvancedHelperControlsCardEditor extends HTMLElement {
           <button class="btn-delete" data-index="${idx}">Entfernen</button>
         </div>
         <div class="form-row">
-          <label>Entitäts-ID</label>
-          <input type="text" class="field-entity" data-index="${idx}" value="${ent.entity || ""}" placeholder="input_number.temperatur"/>
+          <label>Entität</label>
+          <ha-entity-picker
+            class="field-entity"
+            data-index="${idx}"
+            label="Entität auswählen"
+            allow-custom-entity
+          ></ha-entity-picker>
         </div>
         <div class="grid-2">
           <div class="form-row">
@@ -1219,6 +1239,27 @@ class AdvancedHelperControlsCardEditor extends HTMLElement {
         </div>
       `;
       container.appendChild(box);
+
+      const picker = box.querySelector(".field-entity");
+      if (picker) {
+        if (this._hass) picker.hass = this._hass;
+        picker.value = ent.entity || "";
+        const handleEntityChange = (e) => {
+          e.stopPropagation();
+          const i = parseInt(picker.dataset.index);
+          const val = e.detail?.value !== undefined ? e.detail.value : e.target.value;
+          const newEntities = [...(this._config.entities || [])];
+          if (newEntities[i]?.entity === val) return;
+          const updated = { ...newEntities[i], entity: val };
+          if (!updated.name && this._hass?.states?.[val]?.attributes?.friendly_name) {
+            updated.name = this._hass.states[val].attributes.friendly_name;
+          }
+          newEntities[i] = updated;
+          this._updateConfig({ ...this._config, entities: newEntities });
+        };
+        picker.addEventListener("value-changed", handleEntityChange);
+        picker.addEventListener("change", handleEntityChange);
+      }
     });
 
     container.querySelectorAll(".btn-delete").forEach(btn => {
@@ -1241,7 +1282,6 @@ class AdvancedHelperControlsCardEditor extends HTMLElement {
       });
     };
 
-    bindField(".field-entity", "entity");
     bindField(".field-control", "control");
     bindField(".field-gradient", "gradient");
     bindField(".field-name", "name");
@@ -1261,7 +1301,7 @@ class AdvancedHelperControlsCardEditor extends HTMLElement {
     this.shadowRoot.getElementById("btn-add-entity")?.addEventListener("click", () => {
       const newEntities = [
         ...(this._config.entities || []),
-        { entity: "input_number.neuer_helfer", control: "rotary-knob", name: "Neuer Helfer" }
+        { entity: "", control: "rotary-knob", name: "" }
       ];
       this._updateConfig({ ...this._config, entities: newEntities });
     });
